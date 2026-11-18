@@ -6,11 +6,14 @@ Run from the project root with:
 
 from __future__ import annotations
 
+import contextlib
+import io
 import json
 import os
 import tempfile
 import unittest
 
+from taskmanager.cli import main as cli_main
 from taskmanager.storage import JsonStorage, StorageError
 from taskmanager.tasks import (
     InvalidTaskError,
@@ -137,6 +140,38 @@ class TaskManagerTestCase(unittest.TestCase):
         storage.save([task])
         loaded = JsonStorage(self.path).load()
         self.assertEqual(loaded, [task.to_dict()])
+
+
+class CliTestCase(unittest.TestCase):
+    """Tests for the command-line interface (``python -m taskmanager``)."""
+
+    def setUp(self) -> None:
+        self._tmpdir = tempfile.TemporaryDirectory()
+        self.addCleanup(self._tmpdir.cleanup)
+        self.path = os.path.join(self._tmpdir.name, "tasks.json")
+
+    def _run(self, argv: list[str]) -> tuple[int, str, str]:
+        """Run the CLI, capturing stdout/stderr and the exit code."""
+        stdout, stderr = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+            code = cli_main(["--file", self.path, *argv])
+        return code, stdout.getvalue(), stderr.getvalue()
+
+    def test_cli_add_and_list(self) -> None:
+        code, out, _ = self._run(["add", "buy", "milk"])
+        self.assertEqual(code, 0)
+        self.assertIn("Added task #1: buy milk", out)
+
+        code, out, _ = self._run(["list"])
+        self.assertEqual(code, 0)
+        self.assertIn("#1", out)
+        self.assertIn("buy milk", out)
+
+    def test_cli_complete_missing_id_fails(self) -> None:
+        code, out, err = self._run(["complete", "99"])
+        self.assertEqual(code, 1)
+        self.assertIn("Error", err)
+        self.assertNotIn("Completed", out)
 
 
 if __name__ == "__main__":
