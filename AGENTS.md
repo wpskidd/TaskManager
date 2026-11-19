@@ -48,6 +48,19 @@ You are working in a Git-controlled Python project.
 
 
 
+\## Automatic commit and push (approved workflow)
+
+\- The user has approved automatic commit + push after each completed task.
+
+\- After finishing a task: run the tests, commit the changes with a descriptive message, then `git push` to `origin` on the current branch.
+
+\- Remote: `origin` = `https://github.com/wpskidd/TaskManager.git` (GitHub user `wpskidd`).
+
+\- Git identity: `wpskidd` / `wpskidd@users.noreply.github.com` (noreply email required — the real email is private on GitHub and pushes are rejected otherwise).
+
+\- Never force-push; if a push is rejected as non-fast-forward, report it and ask before rebasing or rewriting.
+
+
 \## Git safety
 
 \- Do not push to a remote repository without approval.
